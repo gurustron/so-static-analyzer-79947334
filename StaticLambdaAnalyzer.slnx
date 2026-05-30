@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/StaticLambdaAnalyzer.Analyzer/StaticLambdaAnalyzer.Analyzer.csproj" />
+    <Project Path="src/StaticLambdaAnalyzer.TestApp/StaticLambdaAnalyzer.TestApp.csproj" />
+  </Folder>
+</Solution>
