@@ -1,5 +1,3 @@
-namespace StaticLambdaAnalyzer.TestApp;
-
 public static class MyAnalyzedClass
 {
     public static void assertStatic<T>(bool shouldBeStatic, System.Func<T> action)

@@ -3,7 +3,7 @@
 using System.Threading.Tasks;
 using Verify = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerVerifier<Analyzer.AvoidNonstaticLabmdasAnalyzer, Microsoft.CodeAnalysis.Testing.DefaultVerifier>;
 
-public class Tests
+public class AvoidNonstaticLabmdasAnalyzerTests
 {
 
     [Test]
@@ -28,19 +28,19 @@ public class Tests
                 static int staticFunction() => 42;
                 int nonStaticFunction() => fortyTwo;
             }
+        }
 
-            public static class MyAnalyzedClass
+        public static class MyAnalyzedClass
+        {
+            public static void assertStatic<T>(bool shouldBeStatic, System.Func<T> action)
             {
-                public static void assertStatic<T>(bool shouldBeStatic, System.Func<T> action)
-                {
-                    Console.WriteLine($"Assert: {IsStatic(action) == shouldBeStatic}");
-                }
-                public static bool IsStatic(System.Delegate @delegate)
-                {
-                    bool hasTarget = @delegate.Target != null;
-                    Console.WriteLine(@delegate.Method.IsStatic == !hasTarget);
-                    return !hasTarget;
-                }
+                Console.WriteLine($"Assert: {IsStatic(action) == shouldBeStatic}");
+            }
+            public static bool IsStatic(System.Delegate @delegate)
+            {
+                bool hasTarget = @delegate.Target != null;
+                Console.WriteLine(@delegate.Method.IsStatic == !hasTarget);
+                return !hasTarget;
             }
         }
         """;
