@@ -3,4 +3,7 @@
     <Project Path="src/StaticLambdaAnalyzer.Analyzer/StaticLambdaAnalyzer.Analyzer.csproj" />
     <Project Path="src/StaticLambdaAnalyzer.TestApp/StaticLambdaAnalyzer.TestApp.csproj" />
   </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/StaticLambdaAnalyzer.Tests/StaticLambdaAnalyzer.Tests.csproj" />
+  </Folder>
 </Solution>

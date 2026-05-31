@@ -7,9 +7,9 @@ using Microsoft.CodeAnalysis.Operations;
 namespace StaticLambdaAnalyzer.Analyzer
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class AvoidNonstaticLabmdasDictionaryAnalyzer : DiagnosticAnalyzer
+    public class AvoidNonstaticLabmdasAnalyzer : DiagnosticAnalyzer
     {
-        public const string AvoidNonstaticLabmdasDictionaryAnalyzerId = "StaticLambdaAnalyzer0001";
+        public const string AvoidNonstaticLabmdasDictionaryAnalyzerId = "STLA0001";
         private static readonly DiagnosticDescriptor Rule = new(
         AvoidNonstaticLabmdasDictionaryAnalyzerId,
         title: "Use the lambda parameters instead of using a closure",
@@ -33,7 +33,7 @@ namespace StaticLambdaAnalyzer.Analyzer
                 // var analyzerContext = new AnalyzerContext(ctx.Compilation);
                 // if (analyzerContext.ConcurrentDictionarySymbol is null)
                 //     return;
-
+                
                 // ctx.RegisterOperationAction(innerCtx => analyzerContext.AnalyzeInvocation(innerCtx), OperationKind.Invocation);
             });
 
