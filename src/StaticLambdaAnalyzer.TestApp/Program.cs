@@ -9,4 +9,4 @@ MyAnalyzedClass.assertStatic(true, static () => 42); // no diagnostic
 return;
 
 static int staticFunction() => 42;
-int nonStaticFunction() => fortyTwo;
+int nonStaticFunction() => 42;

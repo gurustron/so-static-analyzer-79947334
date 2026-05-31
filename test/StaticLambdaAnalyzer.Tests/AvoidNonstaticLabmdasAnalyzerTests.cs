@@ -9,7 +9,7 @@ public class AvoidNonstaticLabmdasAnalyzerTests
 {
 
     [Test]
-    public async Task Test1()
+    public async Task BaseTests()
     {
          var test = """
          using System;   
@@ -20,15 +20,15 @@ public class AvoidNonstaticLabmdasAnalyzerTests
                  Console.WriteLine("Hello, World!");
 
                  int fortyTwo = 42;
-                 // MyAnalyzedClass.assertStatic(true, staticFunction); 
-                 // MyAnalyzedClass.assertStatic(false, nonStaticFunction); 
-                 // MyAnalyzedClass.assertStatic(true, static () => 42); 
+                 MyAnalyzedClass.assertStatic(true, staticFunction); 
+                 MyAnalyzedClass.assertStatic(false, nonStaticFunction); 
+                 MyAnalyzedClass.assertStatic(true, static () => 42); 
                  MyAnalyzedClass.assertStatic(true, () => 42); 
                  MyAnalyzedClass.assertStatic(false, () => fortyTwo); 
                  return;
 
                  static int staticFunction() => 42;
-                 int nonStaticFunction() => fortyTwo;
+                 int nonStaticFunction() => 42;
              }
          }
 
@@ -48,10 +48,10 @@ public class AvoidNonstaticLabmdasAnalyzerTests
          """;
         DiagnosticResult[] expected =
         [
-            // Verify.Diagnostic()
-            //     .WithArguments("nonStaticFunction").WithSpan(10, 45, 10, 62),
-            // Verify.Diagnostic()
-            //     .WithArguments("fortyTwo").WithSpan(13, 45, 13, 59),
+            Verify.Diagnostic()
+                .WithArguments("nonStaticFunction").WithSpan(10, 45, 10, 62),
+            Verify.Diagnostic()
+                .WithArguments("fortyTwo").WithSpan(13, 45, 13, 59),
         ];
         await Verify.VerifyAnalyzerAsync(test, expected);
     }
