@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 
@@ -12,13 +12,13 @@ namespace StaticLambdaAnalyzer.Analyzer
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class AvoidNonstaticLabmdasAnalyzer : DiagnosticAnalyzer
     {
-        public const string AvoidNonstaticLabmdasDictionaryAnalyzerId = "STLA0001";
+        public const string AvoidNonstaticLabmdasAnalyzerId = "STLA0001";
         private static readonly DiagnosticDescriptor Rule = new(
-        AvoidNonstaticLabmdasDictionaryAnalyzerId,
-        title: "Use the lambda parameters instead of using a closure",
-        messageFormat: "Use the lambda parameters instead of using a closure (captured variable: {0})",
+        AvoidNonstaticLabmdasAnalyzerId,
+        title: "Avoid Nonstatic Labmdas",
+        messageFormat: "Use static methods/lamdas instead of {0}",
         "Performance",
-        DiagnosticSeverity.Info,
+        DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         description: "",
         helpLinkUri: "");
@@ -37,16 +37,17 @@ namespace StaticLambdaAnalyzer.Analyzer
                 // if (analyzerContext.ConcurrentDictionarySymbol is null)
                 //     return;
 
-                ctx.RegisterOperationAction(innerCtx => analyzerContext.AnalyzeInvocation(innerCtx), OperationKind.Invocation);
+                ctx.RegisterOperationAction(analyzerContext.AnalyzeInvocation, OperationKind.Invocation);
             });
-
         }
 
         private sealed class AnalyzerContext
         {
+            public INamedTypeSymbol AnalyzedType { get; }
+            public IMethodSymbol AnalyzedMethod { get; }
+
             public AnalyzerContext(Compilation compilation)
             {
-
                 var symbol = compilation.GetTypesByMetadataName("MyAnalyzedClass");
 
                 AnalyzedType = symbol.FirstOrDefault();
@@ -55,7 +56,7 @@ namespace StaticLambdaAnalyzer.Analyzer
                     return;
                 }
 
-                // TODO
+                // TODO: change to correct name and add validations
                 AnalyzedMethod = AnalyzedType.GetMembers("assertStatic").OfType<IMethodSymbol>().SingleOrDefault();
             }
 
@@ -72,15 +73,79 @@ namespace StaticLambdaAnalyzer.Analyzer
                     return;
                 }
 
+                // TODO: change + validations
                 IArgumentOperation argumentOperation = op.Arguments[1];
-                bool v = argumentOperation.Value is IDelegateCreationOperation;
+
+                if (argumentOperation.Value is IDelegateCreationOperation delegateCreationOperation)
+                {
+                    var delegateTarget = delegateCreationOperation.Target;
+                    if (delegateTarget is IMethodReferenceOperation methodReferenceOperation)
+                    {
+                        if (methodReferenceOperation.Method.IsStatic)
+                        {
+                            return;
+                        }
+                        
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                descriptor: Rule, 
+                                location: methodReferenceOperation.Syntax.GetLocation(), 
+                                messageArgs: methodReferenceOperation.Method.Name));
+                    }
+                    else if (delegateCreationOperation.Target is IAnonymousFunctionOperation anonymousFunctionOperation)
+                    {
+                        // check that lambda marked as static
+                        if (anonymousFunctionOperation.Symbol.IsStatic)
+                        {
+                            return;
+                        }
+
+                        var syntax = GetDataFlowArgument(anonymousFunctionOperation.Body.Syntax);
+                        var semanticModel = context.Operation.SemanticModel!;
+                        DataFlowAnalysis dataFlow = semanticModel.AnalyzeDataFlow(syntax);
+                        if (dataFlow.CapturedInside.Length > 0)
+                        {
+                            context.ReportDiagnostic(Diagnostic.Create(
+                                descriptor: Rule,
+                                location: anonymousFunctionOperation.Syntax.GetLocation(),
+                                messageArgs: string.Join(", ", dataFlow.Captured.Select(symbol => symbol.Name))));
+                        }
+                    }
+                }
+
                 Debug.WriteLine("Found");
             }
+            
+            static IEnumerable<ISymbol> GetParameters(IOperation operation)
+            {
+                if (operation is IAnonymousFunctionOperation func)
+                {
+                    return func.Symbol.Parameters;
+                }
 
+                if (operation is IDelegateCreationOperation delegateCreation)
+                {
+                    return GetParameters(delegateCreation.Target);
+                }
 
-            public INamedTypeSymbol AnalyzedType { get; }
-            public IMethodSymbol AnalyzedMethod { get; }
+                return [];
+            }
+        
+            private static SyntaxNode GetDataFlowArgument(SyntaxNode node)
+            {
+                if (node is null)
+                    return null;
+
+                if (node is ArrowExpressionClauseSyntax expression)
+                {
+                    return expression.Expression;
+                }
+
+                return node;
+            }
         }
+        
+        
     }
 }
 
